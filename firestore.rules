@@ -1,0 +1,303 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             request.auth.token.email == 'anugrah.business.2.3@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidStylePreset(value) {
+      return value in ['BALANCED', 'CONCISE', 'EXPLANATORY', 'FORMAL', 'CODE_ARCHITECT'];
+    }
+
+    function isValidModelId(value) {
+      return value is string && value.size() >= 1 && value.size() <= 80 && value.matches('^[a-zA-Z0-9_\\-./:]+$');
+    }
+
+    function isValidProject(data, userId) {
+      return data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.description is string && data.description.size() <= 240 &&
+             data.systemPrompt is string && data.systemPrompt.size() <= 4000 &&
+             data.stylePreset is string && isValidStylePreset(data.stylePreset) &&
+             data.accentIndex is int && data.accentIndex >= 0 && data.accentIndex <= 5;
+    }
+
+    function isValidChatThread(data, userId) {
+      return data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             (!('projectId' in data) || (isValidId(data.projectId))) &&
+             data.modelId is string && isValidModelId(data.modelId) &&
+             data.stylePreset is string && isValidStylePreset(data.stylePreset) &&
+             data.thinkingEnabled is bool &&
+             data.pinned is bool &&
+             data.lastMessagePreview is string && data.lastMessagePreview.size() <= 240 &&
+             data.messageCount is int && data.messageCount >= 0 && data.messageCount <= 10000;
+    }
+
+    function isValidChatMessage(data, userId, chatId) {
+      return data.userId == userId &&
+             data.chatId == chatId &&
+             data.role in ['user', 'model'] &&
+             data.content is string && data.content.size() <= 100000 &&
+             (!('thinkingSummary' in data) || (data.thinkingSummary is string && data.thinkingSummary.size() <= 20000)) &&
+             (!('attachmentName' in data) || (data.attachmentName is string && data.attachmentName.size() >= 1 && data.attachmentName.size() <= 160)) &&
+             (!('artifactTitle' in data) || (data.artifactTitle is string && data.artifactTitle.size() >= 1 && data.artifactTitle.size() <= 120)) &&
+             (!('artifactLanguage' in data) || (data.artifactLanguage is string && data.artifactLanguage.size() >= 1 && data.artifactLanguage.size() <= 40)) &&
+             (!('artifactContent' in data) || (data.artifactContent is string && data.artifactContent.size() <= 100000)) &&
+             (!('modelId' in data) || (data.modelId is string && data.modelId.size() >= 1 && data.modelId.size() <= 60));
+    }
+
+    function isValidSavedArtifact(data, userId) {
+      return data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.language is string && data.language.size() >= 1 && data.language.size() <= 40 &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 100000 &&
+             (!('chatId' in data) || isValidId(data.chatId));
+    }
+
+    function isValidUserApp(data, userId) {
+      return data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.description is string && data.description.size() <= 300 &&
+             data.htmlCode is string && data.htmlCode.size() >= 1 && data.htmlCode.size() <= 150000 &&
+             data.lastPrompt is string && data.lastPrompt.size() <= 1000 &&
+             data.modelId is string && isValidModelId(data.modelId) &&
+             data.version is int && data.version >= 1 && data.version <= 10000 &&
+             data.accentIndex is int && data.accentIndex >= 0 && data.accentIndex <= 5;
+    }
+
+    function isValidBugCategory(value) {
+      return value in ['AI_CHAT', 'YOUR_APP', 'API_KEYS', 'LOGIN_SYNC', 'UI_ANIMATION', 'OTHER'];
+    }
+
+    function isValidBugStatus(value) {
+      return value in ['OPEN', 'IN_PROGRESS', 'FIXED'];
+    }
+
+    function isValidBugReport(data) {
+      return data.userId is string && isValidId(data.userId) &&
+             data.reporterName is string && data.reporterName.size() >= 1 && data.reporterName.size() <= 80 &&
+             data.reporterEmail is string && data.reporterEmail.size() <= 160 &&
+             data.category is string && isValidBugCategory(data.category) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 4000 &&
+             data.diagnostics is string && data.diagnostics.size() <= 2000 &&
+             data.status is string && isValidBugStatus(data.status) &&
+             data.ownerNote is string && data.ownerNote.size() <= 1000;
+    }
+
+    function isValidSessionStatus(value) {
+      return value in ['SIGNED_IN', 'SIGNED_OUT'];
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.email is string && data.email.size() <= 160 &&
+             data.photoUrl is string && data.photoUrl.size() <= 500 &&
+             data.lastModelId is string && isValidModelId(data.lastModelId) &&
+             data.chatCount is int && data.chatCount >= 0 && data.chatCount <= 100000 &&
+             data.appCount is int && data.appCount >= 0 && data.appCount <= 100000 &&
+             data.sessionStatus is string && isValidSessionStatus(data.sessionStatus);
+    }
+
+    function isValidAuthEvent(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.email is string && data.email.size() <= 160 &&
+             ((!('email' in request.auth.token) && data.email == '') ||
+              ('email' in request.auth.token && request.auth.token.email is string && data.email == request.auth.token.email)) &&
+             data.eventType in ['LOGIN', 'LOGOUT'] &&
+             data.deviceInfo is string && data.deviceInfo.size() <= 240;
+    }
+
+    match /userProfiles/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'photoUrl', 'lastModelId', 'chatCount', 'appCount', 'sessionStatus', 'createdAt', 'lastActiveAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'photoUrl', 'lastModelId', 'chatCount', 'appCount', 'sessionStatus', 'createdAt', 'lastActiveAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().lastActiveAt is timestamp && incoming().lastActiveAt <= request.time;
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().lastActiveAt is timestamp && incoming().lastActiveAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'lastModelId', 'chatCount', 'appCount', 'sessionStatus', 'lastActiveAt']);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list, write: if false;
+
+      match /projects/{projectId} {
+        allow list: if isOwner(userId) || isAdmin();
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(projectId);
+        allow create: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidProject(incoming(), userId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'description', 'systemPrompt', 'stylePreset', 'accentIndex', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'description', 'systemPrompt', 'stylePreset', 'accentIndex', 'createdAt', 'updatedAt']) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+        allow update: if isOwner(userId) &&
+                         isValidId(projectId) &&
+                         isValidProject(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'systemPrompt', 'stylePreset', 'accentIndex', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(projectId);
+      }
+
+      match /chats/{chatId} {
+        allow list: if isOwner(userId) || isAdmin();
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(chatId);
+        allow create: if isOwner(userId) &&
+                         isValidId(chatId) &&
+                         isValidChatThread(incoming(), userId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'modelId', 'stylePreset', 'thinkingEnabled', 'pinned', 'lastMessagePreview', 'messageCount', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'projectId', 'modelId', 'stylePreset', 'thinkingEnabled', 'pinned', 'lastMessagePreview', 'messageCount', 'createdAt', 'updatedAt']) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+        allow update: if isOwner(userId) &&
+                         isValidId(chatId) &&
+                         isValidChatThread(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'projectId', 'modelId', 'stylePreset', 'thinkingEnabled', 'pinned', 'lastMessagePreview', 'messageCount', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(chatId);
+
+        match /messages/{messageId} {
+          allow list: if (isOwner(userId) || isAdmin()) && isValidId(chatId);
+          allow get: if (isOwner(userId) || isAdmin()) && isValidId(chatId) && isValidId(messageId);
+          allow create: if isOwner(userId) &&
+                           isValidId(chatId) &&
+                           isValidId(messageId) &&
+                           isValidChatMessage(incoming(), userId, chatId) &&
+                           exists(/databases/$(database)/documents/users/$(userId)/chats/$(chatId)) &&
+                           incoming().keys().hasAll(['userId', 'chatId', 'role', 'content', 'createdAt']) &&
+                           incoming().keys().hasOnly(['userId', 'chatId', 'role', 'content', 'thinkingSummary', 'attachmentName', 'artifactTitle', 'artifactLanguage', 'artifactContent', 'modelId', 'createdAt']) &&
+                           incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+          allow update: if false;
+          allow delete: if isOwner(userId) && isValidId(chatId) && isValidId(messageId);
+        }
+      }
+
+      match /artifacts/{artifactId} {
+        allow list: if isOwner(userId) || isAdmin();
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(artifactId);
+        allow create: if isOwner(userId) &&
+                         isValidId(artifactId) &&
+                         isValidSavedArtifact(incoming(), userId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'language', 'content', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'language', 'content', 'chatId', 'createdAt', 'updatedAt']) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+        allow update: if isOwner(userId) &&
+                         isValidId(artifactId) &&
+                         isValidSavedArtifact(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'language', 'content', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(artifactId);
+      }
+
+      match /userApps/{appId} {
+        allow list: if isOwner(userId) || isAdmin();
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(appId);
+        allow create: if isOwner(userId) &&
+                         isValidId(appId) &&
+                         isValidUserApp(incoming(), userId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'description', 'htmlCode', 'lastPrompt', 'modelId', 'version', 'accentIndex', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'description', 'htmlCode', 'lastPrompt', 'modelId', 'version', 'accentIndex', 'createdAt', 'updatedAt']) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+        allow update: if isOwner(userId) &&
+                         isValidId(appId) &&
+                         isValidUserApp(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'htmlCode', 'lastPrompt', 'modelId', 'version', 'accentIndex', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(appId);
+      }
+    }
+
+    match /bugReports/{reportId} {
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isSignedIn() &&
+                       isValidId(reportId) &&
+                       isValidBugReport(incoming()) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().status == 'OPEN' &&
+                       incoming().ownerNote == '' &&
+                       incoming().keys().hasAll(['userId', 'reporterName', 'reporterEmail', 'category', 'title', 'description', 'diagnostics', 'status', 'ownerNote', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'reporterName', 'reporterEmail', 'category', 'title', 'description', 'diagnostics', 'status', 'ownerNote', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time;
+      allow update: if isSignedIn() &&
+                       isValidId(reportId) &&
+                       isValidBugReport(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time && (
+                         (isAdmin() &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'ownerNote', 'updatedAt'])) ||
+                         (request.auth.uid == existing().userId &&
+                          existing().status != 'FIXED' &&
+                          incoming().status == existing().status &&
+                          incoming().ownerNote == existing().ownerNote &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'diagnostics', 'updatedAt']))
+                       );
+      allow delete: if isValidId(reportId) && (isAdmin() || isOwner(existing().userId));
+    }
+
+    match /authEvents/{eventId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() &&
+                       isValidId(eventId) &&
+                       isValidAuthEvent(incoming()) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'eventType', 'deviceInfo', 'createdAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'eventType', 'deviceInfo', 'createdAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(eventId);
+    }
+  }
+}

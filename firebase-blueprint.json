@@ -1,0 +1,203 @@
+{
+  "entities": {
+    "AiProject": {
+      "title": "AiProject",
+      "description": "A user-created AI workspace/project with custom system instructions and response style.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "name": { "type": "string", "description": "Project display title (1-80 chars)." },
+        "description": { "type": "string", "description": "Short project summary (0-240 chars)." },
+        "systemPrompt": { "type": "string", "description": "Custom system prompt applied to chats in this project (0-4000 chars)." },
+        "stylePreset": {
+          "type": "string",
+          "enum": ["BALANCED", "CONCISE", "EXPLANATORY", "FORMAL", "CODE_ARCHITECT"],
+          "description": "Default response style preset."
+        },
+        "accentIndex": { "type": "integer", "description": "Color accent index (0-5)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." }
+      },
+      "required": ["userId", "name", "description", "systemPrompt", "stylePreset", "accentIndex", "createdAt", "updatedAt"]
+    },
+    "ChatThread": {
+      "title": "ChatThread",
+      "description": "A persistent cloud-synced AI conversation thread.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "title": { "type": "string", "description": "Conversation title (1-120 chars)." },
+        "projectId": { "type": "string", "description": "Optional parent AiProject document ID." },
+        "modelId": {
+          "type": "string",
+          "description": "Selected built-in or custom API model ID (e.g. gemini-3.8-flash, opus-5.5, febal-5.1, sonnet-5.5)."
+        },
+        "stylePreset": {
+          "type": "string",
+          "enum": ["BALANCED", "CONCISE", "EXPLANATORY", "FORMAL", "CODE_ARCHITECT"],
+          "description": "Active writing style preset."
+        },
+        "thinkingEnabled": { "type": "boolean", "description": "Whether extended reasoning block is enabled." },
+        "pinned": { "type": "boolean", "description": "Whether the thread is starred/pinned." },
+        "lastMessagePreview": { "type": "string", "description": "Preview snippet of the latest message (0-240 chars)." },
+        "messageCount": { "type": "integer", "description": "Total number of messages in the thread." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." }
+      },
+      "required": ["userId", "title", "modelId", "stylePreset", "thinkingEnabled", "pinned", "lastMessagePreview", "messageCount", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "An individual message inside a ChatThread, optionally carrying reasoning notes or an extracted Artifact.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "chatId": { "type": "string", "description": "Parent ChatThread document ID." },
+        "role": { "type": "string", "enum": ["user", "model"], "description": "Sender role." },
+        "content": { "type": "string", "description": "Message body (0-100000 chars)." },
+        "thinkingSummary": { "type": "string", "description": "Optional collapsible thinking trace." },
+        "attachmentName": { "type": "string", "description": "Optional attached file or image label." },
+        "artifactTitle": { "type": "string", "description": "Optional extracted artifact title." },
+        "artifactLanguage": { "type": "string", "description": "Optional extracted artifact language." },
+        "artifactContent": { "type": "string", "description": "Optional extracted artifact source content." },
+        "modelId": { "type": "string", "description": "Model ID used to generate this reply." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." }
+      },
+      "required": ["userId", "chatId", "role", "content", "createdAt"]
+    },
+    "SavedArtifact": {
+      "title": "SavedArtifact",
+      "description": "A user-saved code, HTML, SVG, or document artifact in the cloud library.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "title": { "type": "string", "description": "Artifact title (1-120 chars)." },
+        "language": { "type": "string", "description": "Artifact language or format (1-40 chars)." },
+        "content": { "type": "string", "description": "Artifact source code or markdown content (1-100000 chars)." },
+        "chatId": { "type": "string", "description": "Optional originating chat ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp set via FieldValue.serverTimestamp()." }
+      },
+      "required": ["userId", "title", "language", "content", "createdAt", "updatedAt"]
+    },
+    "UserApp": {
+      "title": "UserApp",
+      "description": "A user-created interactive HTML/CSS/JS mini-app built and modified with Zenvix AI.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "name": { "type": "string", "description": "App display name (1-80 chars)." },
+        "description": { "type": "string", "description": "Short app summary (0-300 chars)." },
+        "htmlCode": { "type": "string", "description": "Self-contained interactive HTML/CSS/JS source (1-150000 chars)." },
+        "lastPrompt": { "type": "string", "description": "Creation or latest modification prompt (0-1000 chars)." },
+        "modelId": { "type": "string", "description": "AI model ID used for last build or edit." },
+        "version": { "type": "integer", "description": "Incremental build version (1-10000)." },
+        "accentIndex": { "type": "integer", "description": "Accent color index (0-5)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["userId", "name", "description", "htmlCode", "lastPrompt", "modelId", "version", "accentIndex", "createdAt", "updatedAt"]
+    },
+    "BugReport": {
+      "title": "BugReport",
+      "description": "A user-submitted bug report and device diagnostics synced to the Zenvix AI owner inbox.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Reporter Firebase Auth UID." },
+        "reporterName": { "type": "string", "description": "Reporter display name (1-80 chars)." },
+        "reporterEmail": { "type": "string", "description": "Reporter verified email address (0-160 chars)." },
+        "category": {
+          "type": "string",
+          "enum": ["AI_CHAT", "YOUR_APP", "API_KEYS", "LOGIN_SYNC", "UI_ANIMATION", "OTHER"],
+          "description": "App area where the issue occurred."
+        },
+        "title": { "type": "string", "description": "Short bug summary (1-120 chars)." },
+        "description": { "type": "string", "description": "Detailed bug steps or feedback (1-4000 chars)." },
+        "diagnostics": { "type": "string", "description": "App version, Android SDK, model ID, and error log snippet (0-2000 chars)." },
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "IN_PROGRESS", "FIXED"],
+          "description": "Resolution status controlled by the app owner."
+        },
+        "ownerNote": { "type": "string", "description": "Resolution or status note written by the app owner (0-1000 chars)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["userId", "reporterName", "reporterEmail", "category", "title", "description", "diagnostics", "status", "ownerNote", "createdAt", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Cloud profile and usage summary for every Google-authenticated Zenvix AI user, visible to the profile owner and the verified app owner.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID." },
+        "displayName": { "type": "string", "description": "Google account display name (1-80 chars)." },
+        "email": { "type": "string", "description": "Google account email (0-160 chars)." },
+        "photoUrl": { "type": "string", "description": "Optional Google profile photo URL (0-500 chars)." },
+        "lastModelId": { "type": "string", "description": "Latest AI model selected by the user." },
+        "chatCount": { "type": "integer", "description": "Current cloud chat thread count." },
+        "appCount": { "type": "integer", "description": "Current Your App count." },
+        "sessionStatus": {
+          "type": "string",
+          "enum": ["SIGNED_IN", "SIGNED_OUT"],
+          "description": "Whether the user's latest recorded session is signed in or signed out."
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "First sign-in server timestamp." },
+        "lastActiveAt": { "type": "string", "format": "date-time", "description": "Latest activity or sign-in/out server timestamp." }
+      },
+      "required": ["userId", "displayName", "email", "photoUrl", "lastModelId", "chatCount", "appCount", "sessionStatus", "createdAt", "lastActiveAt"]
+    },
+    "AuthEvent": {
+      "title": "AuthEvent",
+      "description": "Immutable Login/Logout audit event readable only by the verified Zenvix AI owner.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the user." },
+        "displayName": { "type": "string", "description": "User Google display name (1-80 chars)." },
+        "email": { "type": "string", "description": "User Google email address (0-160 chars)." },
+        "eventType": {
+          "type": "string",
+          "enum": ["LOGIN", "LOGOUT"],
+          "description": "Whether the user logged in or logged out."
+        },
+        "deviceInfo": { "type": "string", "description": "Android OS & device summary (0-240 chars)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of the login or logout event." }
+      },
+      "required": ["userId", "displayName", "email", "eventType", "deviceInfo", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/AiProject" },
+      "description": "User-scoped custom AI projects with system instructions."
+    },
+    "/users/{userId}/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatThread" },
+      "description": "User-scoped cloud-synced AI conversation threads."
+    },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "User-scoped messages within a conversation thread."
+    },
+    "/users/{userId}/artifacts/{artifactId}": {
+      "schema": { "$ref": "#/entities/SavedArtifact" },
+      "description": "User-scoped library of saved code and document artifacts."
+    },
+    "/users/{userId}/userApps/{appId}": {
+      "schema": { "$ref": "#/entities/UserApp" },
+      "description": "User-scoped interactive mini-apps created and iterated inside Your App."
+    },
+    "/bugReports/{reportId}": {
+      "schema": { "$ref": "#/entities/BugReport" },
+      "description": "User-submitted bug reports & diagnostics accessible only to the reporter and verified Zenvix AI owner."
+    },
+    "/userProfiles/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Google-authenticated user directory accessible only to the profile owner and verified Zenvix AI owner."
+    },
+    "/authEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/AuthEvent" },
+      "description": "Immutable login/logout activity log readable exclusively by the verified Zenvix AI owner."
+    }
+  }
+}

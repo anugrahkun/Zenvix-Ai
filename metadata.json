@@ -1,0 +1,6 @@
+{
+  "name": "Zenvix AI",
+  "description": "Cloud AI assistant inspired by Claude with streaming chat, code and document artifacts, multimodal vision and file analysis, custom projects, and cloud sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

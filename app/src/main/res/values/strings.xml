@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Zenvix AI</string>
+    <string name="app_tagline">Cloud AI Workspace</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="new_chat">New chat</string>
+    <string name="composer_placeholder">Ask Zenvix anything…</string>
+    <string name="thinking_label">Extended Thinking</string>
+    <string name="artifacts_title">Artifacts Studio</string>
+    <string name="projects_title">Projects</string>
+    <string name="sign_out">Sign out</string>
+    <string name="live_voice_label">Live</string>
+    <string name="live_voice_cd">Open Zenvix Live Voice assistant</string>
+</resources>
